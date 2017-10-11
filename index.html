@@ -1,5 +1,10 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
+<html>
+<head>
+    <title>Meyers-Briggs-Vis</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="http://d3js.org/d3.v3.min.js"></script>
 <style>
  svg {
      position:absolute;
@@ -9,8 +14,7 @@
      height: 100%;
  }
 .node circle {
-  // fill: #fff;
-  stroke: #888; //steelblue;
+  stroke: #888;
   stroke-width: 1.5px;
 }
 
@@ -34,178 +38,9 @@ text {
     stroke-width: 3px;
 }
 </style>
+</head>
 <body>
-
+    <svg id="mbti-vis"></svg>
 </body>
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script>
-var types = [[""],["E", "I"], ["S", "N"], ["T", "F"], ["J", "P"]];
-var friends = [{name: "Alex", result: ["E", "N", "T", "P"]},
-               {name: "Amanda", result: ["E", "N" , "T", "J"]},
-               {name: "Andrej", result: ["I", "N" , "F", "P"]},
-               {name: "André", result: ["I", "N" , "T", "J"]},
-               {name: "Malin", result: ["E", "N" , "F", "P"]},
-               {name: "Asik", result: ["E", "N" , "F", "P"]},
-               {name: "Ini", result: ["E", "N" , "F", "P"]},
-               {name: "Per", result: ["E", "N" , "F", "J"]},
-               {name: "Pitura", result: ["E", "N" , "T", "J"]},
-               {name: "Jocke", result: ["I", "N" , "T", "J"]},
-               {name: "Ljungqvist", result: ["I", "N" , "T", "J"]},
-               {name: "Lisa", result: ["I", "N" , "F", "J"]},
-               {name: "Jeppe", result: ["E", "N" , "T", "P"]},
-               {name: "Anna", result: ["E", "N" , "F", "J"]},
-               {name: "Lars", result: ["I", "N" , "T", "P"]},
-               {name: "Kerstin", result: ["E", "N" , "F", "J"]},
-               {name: "Alicia", result: ["I", "S" , "F", "P"]},
-               {name: "Pat", result: ["E", "N" , "T", "J"], percent: [89,38,25,1]},
-               {name: "Monika", result: ["I", "N" , "T", "J"], percent: [33,38,1,44]},
-               {name: "Jussi", result: ["E", "S" , "T", "J"], percent: [11,1,1,1]},
-               {name: "Amanda 2", result: ["E", "S" , "F", "P"]}
-              ];
-
-function generate_tree(types) {
-    var elem = types[0];
-    return elem ? elem.map(function(d) {
-        return {"name": d, "children" : generate_tree(types.slice(1))}
-    }) : []
-}
-
-function locate_node(friend, node) {
-    if(node.children == undefined) {
-        friend.tx = node.x;
-        friend.ty = node.y;
-        friend.x = friend.x || 0;
-        friend.y = friend.y || 0;
-        return;
-    }
-    for(var i = 0; i < node.children.length; i++) {
-        if(friend.result.indexOf(node.children[i].name) > -1) {
-            locate_node(friend, node.children[i])
-        }
-    }
-}
-
-function shuffle_types() {
-    types.shift()
-    d3.shuffle(types)
-    types.unshift([""]);
-}
-
-function update_tree() {
-    sort = 1
-    nodes = tree.nodes(generate_tree(types)[0]);
-    links = tree.links(nodes);
-    friends.forEach(function(d) { locate_node(d, nodes[0]) });
-    force.start();
-}
-
-function update() {
-    shuffle_types();
-    update_tree();
-    update_d3();
-}
-
-var diameter = 1000;
-var color = d3.scale.ordinal()
-    .domain(["" ,"E", "I", "S", "N", "T", "F", "J", "P"])
-    .range(["#ffffff", "#2c7fb8", "#7fcdbb", "#f03b20", "#feb24c", "#31a354", "#addd8e", "#c51b8a", "#fa9fb5"]);
-var sort = 1;
-var tree = d3.layout.tree()
-    .size([360, diameter / 2 - 120])
-    .separation(function(a, b) { return (a.parent == b.parent ? 1 : 2) / a.depth; })
-    .sort(function(a,b) { return sort = sort * -1 });
-var nodes;
-var links;
-
-var diagonal = d3.svg.diagonal.radial()
-    .projection(function(d) { return [d.y, d.x / 180 * Math.PI]; });
-
- var svg = d3.select("body")
-             .append("svg")
-    // .attr('viewBox', '0 0 ' + diameter + ' ' + diameter)
-             //.attr('perserveAspectRatio', 'xMinYMid')
-             .append("g")
-             .attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
-
-var force = d3.layout.force()
-    .nodes(friends)
-    .links([])
-    .gravity(0)
-    .size([diameter, diameter ])
-    .on("tick", tick);
-update_tree();
-svg.append("text")
-    .attr("text-anchor", "middle")
-    .attr("y", "-15")
-    .text("shuffle")
-    .on("click", update)
-
-var link = svg.selectAll(".link")
-    .data(links)
-    .enter().append("path")
-    .attr("class", "link")
-    .attr("d", diagonal);
-
-var node = svg.selectAll(".node")
-    .data(nodes)
-    .enter().append("g")
-    .attr("class", "node")
-    .attr("transform", function(d) { return "rotate(" + (d.x - 90) + ")translate(" + d.y + ")"; })
-
-node.append("circle")
-    .attr("fill", function(d) { return color(d.name) })
-    .attr("r", 5);
-
-svg.selectAll("circle")
-    .data([nodes[0]])
-    .attr("fill", "black")
-    .on("click", update)
-
-node.append("text")
-    .attr("dy", ".31em")
-    .attr("text-anchor", function(d) { return d.x < 180 ? "start" : "end"; })
-    .attr("transform", function(d) { return d.x < 180 ? "translate(8)" : "rotate(180)translate(-8)"; })
-    .text(function(d) { return d.name; });
-
-function update_d3() {
-    node.data(nodes);
-    node.select("circle")
-        .transition()
-        .attr("fill", function(d) { return color(d.name) })
-    node.select("text")
-        .transition()
-        .text(function(d) { return d.name; });
-}
-
-
-
-var person = svg.selectAll(".person")
-    .data(friends)
-var person1 = person.enter()
-    .append("g")
-    .attr("class", "person")
-    .call(force.drag)
-person1
-    .append("circle")
-    .attr("r", 10)
-
-person1
-    .append("text")
-    .attr("text-anchor", "middle")
-    .attr("transform", function(d) { return "translate(0, 25)"; })
-    .text(function(d) { return d.name })
-
-force.start();
-
-
-function tick(e) {
-    var k = 0.1 * e.alpha;
-    friends.forEach(function(o, i) {
-        o.y += (((o.ty + 35) * Math.sin((o.tx-90) / 180 * Math.PI)) - o.y) * k;
-        o.x += (((o.ty + 35) * Math.cos((o.tx-90) / 180 * Math.PI)) - o.x) * k;
-    });
-
-    person.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
-}
-
-</script>
+<script src="script.js"></script>
+</html>
