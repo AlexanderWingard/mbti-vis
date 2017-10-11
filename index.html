@@ -1,7 +1,13 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
 <style>
-
+ svg {
+     position:absolute;
+     left: 0;
+     top: 0;
+     width: 100%;
+     height: 100%;
+ }
 .node circle {
   // fill: #fff;
   stroke: #888; //steelblue;
@@ -27,13 +33,6 @@ text {
     stroke: black;
     stroke-width: 3px;
 }
-
-body {
-    margin:0;
-    padding:0;
-    overflow: hidden;
-}
-
 </style>
 <body>
 
@@ -106,16 +105,7 @@ function update() {
     update_d3();
 }
 
-function update_gui() {
-    var inputs = gui.selectAll(".input")
-        .data(friends)
-
-    inputs.enter()
-        .append("div")
-        .attr("class", "input")
-        .text(function(d) {return d.name});
-}
-var diameter = 960;
+var diameter = 1000;
 var color = d3.scale.ordinal()
     .domain(["" ,"E", "I", "S", "N", "T", "F", "J", "P"])
     .range(["#ffffff", "#2c7fb8", "#7fcdbb", "#f03b20", "#feb24c", "#31a354", "#addd8e", "#c51b8a", "#fa9fb5"]);
@@ -130,15 +120,12 @@ var links;
 var diagonal = d3.svg.diagonal.radial()
     .projection(function(d) { return [d.y, d.x / 180 * Math.PI]; });
 
-var gui = d3.select("body").append("div");
-
-var svg = d3.select("body").append("svg")
-    .style("width", "100%")
-    .style("height", "100%")
+ var svg = d3.select("body")
+             .append("svg")
     // .attr('viewBox', '0 0 ' + diameter + ' ' + diameter)
-    .attr('perserveAspectRatio', 'xMinYMid')
-    .append("g")
-    .attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
+             //.attr('perserveAspectRatio', 'xMinYMid')
+             .append("g")
+             .attr("transform", "translate(" + diameter / 2 + "," + diameter / 2 + ")");
 
 var force = d3.layout.force()
     .nodes(friends)
